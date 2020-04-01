@@ -2,9 +2,8 @@
 FROM composer
 MAINTAINER Andre Giuffrida <andredbg@gmail.com>
 
-ENV PACKAGES="php-pear curl"
 RUN apt-get update && \
-    apt-get install -yq --no-install-recommends $PACKAGES && \
+    apt-get install -yq --no-install-recommends php-pear curl&& \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
