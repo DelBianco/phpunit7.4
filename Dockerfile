@@ -1,33 +1,14 @@
-# PHPUnit Docker Container.
-FROM composer
-MAINTAINER Andre Giuffrida <andredbg@gmail.com>
+FROM php:7.4-cli
 
-RUN apt-get update && \
-    apt-get install -yq --no-install-recommends php-pear curl&& \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+     && apt-get install -y wget git
 
-# Run xdebug installation.
-RUN curl -L http://pecl.php.net/get/xdebug-2.4.0.tgz >> /usr/src/php/ext/xdebug.tgz && \
-    tar -xf /usr/src/php/ext/xdebug.tgz -C /usr/src/php/ext/ && \
-    rm /usr/src/php/ext/xdebug.tgz && \
-    docker-php-ext-install xdebug-2.4.0 && \
-    docker-php-ext-install pcntl && \
-    docker-php-ext-install exif && \
-    php -m
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
+    && php -r "if (hash_file('SHA384', 'composer-setup.php') === '$(wget -q -O - https://composer.github.io/installer.sig)') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" \
+    && php composer-setup.php \
+    && php -r "unlink('composer-setup.php');"
 
-# Goto temporary directory.
-WORKDIR /tmp
+RUN mv composer.phar /usr/bin/composer
 
-# Run composer and phpunit installation.
-RUN composer selfupdate && \
-    composer require "phpunit/phpunit:^7.5" --prefer-source --no-interaction && \
-    ln -s /tmp/vendor/bin/phpunit /usr/local/bin/phpunit
-
-# Set up the application directory.
-VOLUME ["/app"]
-WORKDIR /app
-
-# Set up the command arguments.
-ENTRYPOINT ["/usr/local/bin/phpunit"]
-CMD ["--help"]
+RUN composer selfupdate \
+    && composer require "phpunit/phpunit:~8.0" --prefer-source --no-interaction
